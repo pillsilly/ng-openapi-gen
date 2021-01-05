@@ -25,6 +25,25 @@
         "--fetch-timeout",
         "2000"
       ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run yml",
+      "program": "${workspaceFolder}/node_modules/.bin/ts-node",
+      "args": [
+        "${workspaceFolder}/lib/index.ts",
+        "-i",
+        "${workspaceFolder}/test/yml/CU-OAM-ASM-REST_openapi.yaml",
+        "-o",
+        "${workspaceFolder}/out/mine",
+        "--fetch-timeout",
+        "2000",
+        "--config",
+        "${workspaceFolder}/test/yml/ng-openapi-gen.json",
+        "--customizedResponseType",
+        "{\"/snapshot/operations/locals/{operationId}/files/{fileId}\":{\"toUse\":\"xx\"}}"
+      ]
     }
   ]
 }

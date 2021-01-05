@@ -1,0 +1,495 @@
+openapi: 3.0.0
+
+info:
+  title: CU-OAM-COMMON-REF
+  version: v1
+  contact:
+    email: wood.xia@nokia-sbell.com
+
+paths: {}
+
+components:
+  parameters:
+    ChannelId:
+      in: header
+      name: X-OAM-Channel-ID
+      required: true
+      schema:
+        type: string
+        example: 1
+
+    ResourceUri:
+      in: header
+      name: X-OAM-Resource-URI
+      required: true
+      schema:
+        type: string
+        example: /plans/1/operations/1
+
+    ResourceState:
+      in: header
+      name: X-OAM-Resource-State
+      required: true
+      schema:
+        type: string
+        enum:
+          - initial-sync
+          - delta-sync
+    MessageNumber:
+      in: header
+      name: X-OAM-Message-Number
+      required: true
+      schema:
+        type: string
+        example: 1
+
+    ClientLabel:
+      in: header
+      name: X-OAM-Client-Label
+      required: false
+      schema:
+        type: string
+        example: optional client label string
+
+    ResourceIdsRequestInQuery:
+      name: ids
+      in: query
+      description: Resource Ids for query
+      schema:
+        type: array
+        items:
+          type: string
+      explode: false
+      example:
+        - 1
+        - 2
+
+    ResourceTargetDNs:
+      in: query
+      name: targetDNs
+      description: Resource target distnames
+      required: true
+      schema:
+        type: array
+        items:
+          type: string
+      explode: false
+
+  schemas:
+    Link:
+      title: HATEOAS link
+      type: object
+      properties:
+        rel:
+          description: relation with the link
+          type: string
+          example: self
+        href:
+          description: URIs relative to base URI
+          type: string
+          example: "/api/cm/v1/current_plan?className=CHANNEL_A&DN=/MRBTS-1/RAT-1/BTS_L-1/BTS_CONF-1/NP-1/SCF-1/MRBTS_A-3352/MNL_A-1/MNLENT_A-1/CELLMAPPING_A-1/LCELNR_A-1/CHANNELGROUP_A-1/CHANNEL_A-1"
+      required:
+        - href
+
+    DeltaPlanParametersResp:
+      title: operation response for managedObject lock/unlock
+      type: object
+      required:
+        - className
+        - distName
+        - payload
+      properties:
+        className:
+          description: className of ManagedObject
+          type: string
+          example: RMOD
+        distName:
+          description: distName of ManagedObject
+          type: string
+          example: MRBTS-0/EQM-1/APEQM-1/RMOD-1
+        payload:
+          description: payload containing the managedObject Lock/unlock
+          type: string
+          example: '{"AdministrativeState": "locked" }'
+
+    OperationResponse:
+      title: Operation Response.
+      type: object
+      required:
+        - id
+        - isCompleted
+        - links
+      properties:
+        id:
+          description: Operation Id which is unique for each operation.
+          type: string
+        isCompleted:
+          description: If operation completed
+          type: boolean
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/Link"
+          description: Related HATEOAS resource link
+
+    ObjectChangesNotification:
+      type: object
+      allOf:
+        - type: object
+          required:
+            - eventChangeOrigin
+          properties:
+            eventChangeOrigin:
+              description: The origin triggered this change notification
+              type: string
+              enum:
+                - network
+                - plan
+                - element manager
+            userPlanId:
+              description: |
+                Id of the plan triggered this change notification.
+                It is from userPlanId in PlanRequest. Not OAM CM internal plan id.
+              type: string
+              example: user_plan_id_string
+        - $ref: "#/components/schemas/ObjectChanges"
+
+    ObjectChanges:
+      type: object
+      properties:
+        removed:
+          description: The distName list of managed object to be removed.
+          type: array
+          items:
+            type: string
+        created:
+          description: The created managed object.
+          type: array
+          items:
+            $ref: "#/components/schemas/ManagedObject"
+        updated:
+          description: The updated managed object.
+          type: array
+          items:
+            $ref: "#/components/schemas/ManagedObject"
+
+    ManagedObject:
+      type: object
+      properties:
+        className:
+          type: string
+          description: className for this given object
+          example: NTP
+        distName:
+          type: string
+          description: distName for this given object
+          example: MRBTS-100/MNL-1/MNLENT-1/SYNC-1/CLOCK-1/NTP-1
+        version:
+          type: string
+          description: version of this given object
+          example: TNL5G19_1901_010
+        payload:
+          type: string
+          description: json format string, it represent the object payload
+          example: '{"ntpAlarmingThreshold": 180,
+            "ntpServerIpAddrList":["10.192.33.0","10.192.33.1"]}'
+
+    ImpactDeduceRole:
+      title: Impact Deduce Role Enum
+      description: |
+        Impact Deduce Role name for services.
+        Only applicable for activation impact deduction as some of ActivatorRole will not be involved in impact deduction.
+      type: string
+      enum:
+        - cpConfig
+        - trsConfig
+        - fhConfig
+        - agent
+
+    ActivatorRole:
+      title: Activator Role Enum
+      description: Activator Role name for services.
+      type: string
+      enum:
+        - cpConfig
+        - trsConfig
+        - fm
+        - pm
+        - asmSecurity
+        - asmSnapshot
+        - asmSyslog
+        - asmConfig
+        - fhConfig
+        - agent
+
+    ResourceIdentifier:
+      title: Unique identifier of resource like managed object Instance ID
+      type: string
+
+    Operation:
+      title: Operation
+      type: object
+      required:
+        - id
+        - status
+      properties:
+        id:
+          description: Operation Id which is unique for each operation
+          type: string
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/Link"
+          description: HATEOS links
+        status:
+          description: Operation execution status for all requested resources
+          type: string
+          enum:
+            - ongoing
+            - success
+            - failure
+        detailedStatuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/DetailedStatus"
+        errorMessage:
+          type: string
+      example:
+        id: 101
+        links:
+          - rel: self
+            herf: /some/useful/links
+        status: ongoing
+        errorMessage: error message
+
+    ResourceIdsRequest:
+      title:  Resource Ids operation request
+      type: object
+      required:
+        - ids
+      properties:
+        ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceIdentifier"
+
+    DetailedStatus:
+      title: Detailed Status
+      type: object
+      description: Status of operation for single resource
+      required:
+        - id
+        - status
+      properties:
+        id:
+          $ref: "#/components/schemas/ResourceIdentifier"
+        status:
+          type: string
+          enum:
+            - ongoing
+            - success
+            - failure
+
+    DetailedError:
+      title: General detailed error definition.
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Error"
+        - type: object
+          properties:
+            content:
+              description: Additional error information.
+              type: string
+              example: "additional message"
+          required:
+            - content
+
+    Error:
+      title: General error definition.
+      type: object
+      properties:
+        summary:
+          description: Error summary.
+          type: string
+          example: "error message"
+      required:
+        - summary
+
+    RestartNotification:
+      title: Notification for rebooting the VNF
+      type: object
+      required:
+        - reason
+        - target
+      properties:
+        reason:
+          type: string
+          enum:
+            - "CM reboot request"
+            - "Manual reboot"
+            - "Recovery action"
+          description: The reboot reason
+          example: "Manual reboot"
+        target:
+          type: string
+          enum:
+            - cluster
+          example: "cluster"
+
+    ActivationResponse:
+      type: object
+      required:
+        - restartNeeded
+        - status
+        - result
+      properties:
+        activatorRole:
+          $ref: "#/components/schemas/ActivatorRole"
+        restartNeeded:
+          description: If the plan needs restart.
+          type: boolean
+          default: true
+        status:
+          description: |
+            Activation status.
+            For each activator role, this field indicates their own activation status.
+            Note: 'partial' is for future use until partial activation is supported.
+            Currently, only 'ok', 'ongoing' and 'not_ok' is valid.
+          type: string
+          enum:
+            - ok
+            - partial
+            - ongoing
+            - not_ok
+        planUpdateStatus:
+          description: |
+            Activation plan update status.
+            For each activator role, this field indicates their own plan update(PATCH /current-plan) status.
+          type: string
+          enum:
+            - ok
+            - ongoing
+            - not_ok
+        result:
+          description: Result specific description
+          type: string
+        successful:
+          description: Successful ManagedObject count
+          type: integer
+        unsuccessful:
+          description: Unsuccessful ManagedObject count
+          type: integer
+        managedObjects:
+          description: ManagedObject activation result
+          type: array
+          items:
+            type: object
+            required:
+              - distName
+              - className
+              - operation
+              - status
+            properties:
+              distName:
+                type: string
+                example: MRBTS-100/MNL-1/MNLENT-1/SYNC-1/CLOCK-1/NTP-1
+              className:
+                type: string
+                example: NTP
+              version:
+                type: string
+                example: TNL5G19_1901_010
+              operation:
+                type: string
+                enum:
+                  - create
+                  - update
+                  - delete
+              status:
+                type: string
+                enum:
+                  - ok
+                  - partial
+                  - not_ok
+              errorCode:
+                type: array
+                items:
+                  type: string
+              errorText:
+                type: array
+                items:
+                  type: string
+
+    ActivationResponseCollection:
+      type: object
+      required:
+        - activationStatus
+        - collection
+      properties:
+        restartNeeded:
+          description: If the plan needs restart.
+          type: boolean
+          default: true
+        activationStatus:
+          description: |
+            Overall activation status. This is based on each activator role's activation results `status`.
+          type: string
+          enum:
+            - ok
+            - ongoing
+            - not_ok
+        planUpdateStatus:
+          description: |
+            Overall plan update status. This is based on each activator role's activation results `planUdateStatus`.
+          type: string
+          enum:
+            - ok
+            - ongoing
+            - not_ok
+        links:
+          description: Each activator role's activation results link
+          type: array
+          items:
+            $ref: "#/components/schemas/Link"
+      example:
+        activationStatus: ok
+        planUpdateStatus: ongoing
+        links:
+          - rel: self
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results-collection
+          - rel: cpConfig
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results/2107a3rf-1ca4-47f5-aff9-c6e2027f173g-cpConfig
+          - rel: trsConfig
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results/2107a3rf-1ca4-47f5-aff9-c6e2027f173g-trsConfig
+          - rel: fm
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results/2107a3rf-1ca4-47f5-aff9-c6e2027f173g-fm
+          - rel: pm
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results/2107a3rf-1ca4-47f5-aff9-c6e2027f173g-pm
+          - rel: asmSecurity
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results/2107a3rf-1ca4-47f5-aff9-c6e2027f173g-asmSecurity
+          - rel: asmSnapshot
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results/2107a3rf-1ca4-47f5-aff9-c6e2027f173g-asmSnapshot
+          - rel: asmSyslog
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results/2107a3rf-1ca4-47f5-aff9-c6e2027f173g-asmSyslog
+          - rel: asmConfig
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results/2107a3rf-1ca4-47f5-aff9-c6e2027f173g-asmConfig
+          - rel: fhConfig
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results/2107a3rf-1ca4-47f5-aff9-c6e2027f173g-fhConfig
+          - rel: agent
+            href: /plans/plan_20200323082055_bc13e60a-cc99-4d64-8460-69614925a88d/operations/activations/2107a3rf-1ca4-47f5-aff9-c6e2027f173g/results/2107a3rf-1ca4-47f5-aff9-c6e2027f173g-agent
+
+    ResourceTargetDN:
+      title: distName of ManagedObject
+      type: string
+      example: MRBTS-0/EQM_R-1/APEQM_R-1/ALD_R-0/RETU_R-1
+
+    ResourceDNsRequest:
+      title: Resource targetDNs operation request
+      type: object
+      required:
+        - targetDNs
+      properties:
+        targetDNs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceTargetDN"

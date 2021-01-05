@@ -1,0 +1,714 @@
+openapi: 3.0.0
+
+info:
+  title: CU-OAM-ASM REST API
+  version: v1
+  contact:
+    email: wood.xia@nokia-sbell.com
+
+paths:
+  {}
+components:
+  schemas:
+    Cu:
+      title: gNB-CU (NRBTS)
+      type: object
+      required:
+        - id
+        - mrbtsId
+        - btsName
+        - softwareVersion
+        - operationalState
+        - timeZone
+        - type
+        - mcc
+        - mnc
+        - mncLength
+        - serverIpAddressPrimary
+        - ipAddresses
+        - numberOfAlarms
+        - amfs
+      properties:
+        id:
+          type: string
+          description: gNB-CU (NRBTS) id
+          example: "123"
+        name:
+          type: string
+          description: gNB-CU (NRBTS) name
+          example: "some cu name"
+        mrbtsId:
+          type: string
+          description: MRBTS id
+          example: "12345"
+        btsName:
+          type: string
+          description: MRBTS name
+          example: "MRBTS name"
+        softwareVersion:
+          nullable: true
+          type: string
+          description: Version of the currently active software release
+          example: "v1.0"
+        operationalState:
+          $ref: "#/components/schemas/NullableOperationalState"
+        timeZone:
+          nullable: true
+          type: string
+          description: Cu timezone
+          example: "GMT-0700"
+        type:
+          type: string
+          description: gNB CU type
+          enum:
+            - NSA
+            - SA
+            - both
+        mcc:
+          type: integer
+          format: int32
+          description: Mobile Country Code
+          minimum: 0
+          maximum: 999
+          example: 20
+        mnc:
+          type: integer
+          format: int32
+          description: Primary Mobile Network Code
+          minimum: 0
+          maximum: 999
+          example: 20
+        mncLength:
+          type: integer
+          format: int32
+          description: Length of Mobile Network Code
+          default: 2
+          minimum: 2
+          maximum: 3
+          example: 2
+        serverIpAddressPrimary:
+          nullable: true
+          type: string
+          description:  IP address of the primary DNS server
+          example: "0.255.255.255"
+        serverIpAddressSecondary:
+          type: string
+          description:  IP address of the secondary DNS server
+          example: "0.255.255.255"
+        ipAddresses:
+          $ref: "#/components/schemas/CuIpAddresses"
+        numberOfAlarms:
+          nullable: true
+          type: integer
+          format: int32
+          description: Total number of active alarms
+          default: 0
+          minimum: 0
+          example: 20
+        amfs:
+          nullable: true
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - ipAddress
+              - ngLinkStatus
+            properties:
+              name:
+                nullable: true
+                type: string
+                description: Served AMF name
+                example: "some amf name"
+              ipAddress:
+                type: string
+                description: Served AMF IP address
+                example: "10.144.1.10"
+              ngLinkStatus:
+                $ref: "#/components/schemas/NgLinkStatus"
+
+    NullableOperationalState:
+      nullable: true
+      type: string
+      enum:
+        - enabled
+        - disabled
+        - testing
+
+    CuIpAddresses:
+      title: CU-gNB IP addresses
+      type: object
+      required:
+        - mPlaneIpAddress
+        - f1Interface
+        - ngInterface
+        - x2Interface
+        - xnInterface
+      properties:
+        vnfIpAddress:
+          type: string
+          description: VNF IP address
+          example: "11.145.2.3"
+        mPlaneIpAddress:
+          $ref: "#/components/schemas/NullableIpV4AndV6"
+        f1Interface:
+          type: object
+          description: F1 interface IP addresses
+          required:
+            - cPlaneIpAddress
+            - uPlaneIpAddress
+          properties:
+            cPlaneIpAddress:
+              $ref: "#/components/schemas/NullableIpV4AndV6"
+            uPlaneIpAddress:
+              $ref: "#/components/schemas/NullableIpV4AndV6"
+        ngInterface:
+          type: object
+          description: NG interface IP addresses
+          required:
+            - cPlaneIpAddress
+            - uPlaneIpAddress
+          properties:
+            cPlaneIpAddress:
+              $ref: "#/components/schemas/NullableIpV4AndV6"
+            uPlaneIpAddress:
+              $ref: "#/components/schemas/NullableIpV4AndV6"
+        x2Interface:
+          type: object
+          description: X2 interface IP addresses
+          required:
+            - cPlaneIpAddress
+            - uPlaneIpAddress
+          properties:
+            cPlaneIpAddress:
+              $ref: "#/components/schemas/NullableIpV4AndV6"
+            uPlaneIpAddress:
+              $ref: "#/components/schemas/NullableIpV4AndV6"
+        xnInterface:
+          type: object
+          description: Xn interface IP addresses
+          required:
+            - cPlaneIpAddress
+            - uPlaneIpAddress
+          properties:
+            cPlaneIpAddress:
+              $ref: "#/components/schemas/NullableIpV4AndV6"
+            uPlaneIpAddress:
+              $ref: "#/components/schemas/NullableIpV4AndV6"
+
+    NgLinkStatus:
+      nullable: true
+      type: string
+      enum:
+        - Inactive
+        - Active
+
+    NullableIpV4AndV6:
+      nullable: true
+      title: container for Ip v4 and Ip v6 addresses
+      type: object
+      properties:
+        v4:
+          type: string
+          description: IPv4 address
+          example: "11.145.2.3"
+        v6:
+          type: string
+          description: IPv6 address
+          example: "2001:0db8:0000:0000:0000:0000:1428:57ab"
+
+    DusDiff:
+      title: DUs Diff
+      type: object
+      required:
+        - revision
+        - created
+        - updated
+        - removed
+      properties:
+        revision:
+          type: string
+          description: Identifier which represents a current version of distributed units
+        created:
+          type: array
+          description: Created DUs
+          items:
+            $ref: "#/components/schemas/Du"
+        updated:
+          type: array
+          description: Updated DUs
+          items:
+            $ref: "#/components/schemas/Du"
+        removed:
+          type: array
+          description: Removed DUs IDs
+          example: ["123", "124", "125", "126"]
+          items:
+            type: string
+
+    Du:
+      title: gNB-DU (NRDU)
+      type: object
+      required:
+        - id
+        - name
+        - gnbDuId
+        - administrativeState
+        - f1LinkStatus
+        - alarms
+        - cellsSummary
+        - distNames
+      properties:
+        id:
+          type: string
+          description: Instance ID of NRDU object representing given Distributed Unit in the CU object model
+          example: "123"
+        name:
+          type: string
+          description: ClassName and instance ID of NRDU object representing given Distributed Unit in the CU object model
+          example: "NRDU-123"
+        gnbDuId:
+          type: string
+          description: gNB-DU id
+          example: "333"
+        gnbDuName:
+          type: string
+          description: gNB-DU name
+          example: "some du name"
+        administrativeState:
+          $ref: "#/components/schemas/AdministrativeState"
+        f1LinkStatus:
+          $ref: "#/components/schemas/F1LinkStatus"
+        alarms:
+          nullable: true
+          type: array
+          description: Alarms reported for given distributed unit
+          items:
+            $ref: "#/components/schemas/Alarm"
+        cellGroups:
+          type: array
+          description: List of cell groups served by this DU
+          items:
+            $ref: "#/components/schemas/CellGroup"
+        cellsSummary:
+          $ref: "#/components/schemas/CuCellsSummary"
+        distNames:
+          $ref: "#/components/schemas/DistNames"
+
+    AdministrativeState:
+      type: string
+      enum:
+        - Locked
+        - Unlocked
+
+    NullableAdministrativeState:
+      nullable: true
+      type: string
+      enum:
+        - Locked
+        - Unlocked
+
+    F1LinkStatus:
+      nullable: true
+      type: string
+      enum:
+        - available
+        - unavailable
+
+    Alarm:
+      title: Alarm
+      type: object
+      required:
+        - uuid
+        - severity
+        - alarmId
+        - alarmName
+        - faultId
+        - faultName
+      properties:
+        uuid:
+          description: Unique identifier of an alarm object
+          type: string
+          example: "123-456"
+        severity:
+          type: string
+          enum:
+            - critical
+            - major
+            - minor
+            - warning
+            - indeterminate
+        alarmId:
+          description: Alarm id
+          type: integer
+          format: int32
+          example: 7665
+          minimum: 0
+        alarmName:
+          description: Alarm name
+          type: string
+          example: "BASE STATION TRANSMISSION ALARM"
+        faultId:
+          description: Fault id
+          type: string
+          example: "2016"
+          default: N/A
+        faultName:
+          description: Fault name
+          type: string
+          example: "BB bus reception error (summing device)"
+          default: N/A
+
+    CellGroup:
+      title: Cell group
+      type: object
+      required:
+        - id
+        - cellIds
+      properties:
+        id:
+          type: string
+          description: Cell group unique id
+          example: "123"
+        cellIds:
+          type: array
+          description: List of cell IDs that belongs to this cell group
+          example: ["11", "22", "33"]
+          items:
+            type: string
+
+    CuCellsSummary:
+      title: Summary of CU cells
+      type: object
+      required:
+        - basicCellsSummary
+      properties:
+        basicCellsSummary:
+          $ref: "#/components/schemas/BasicCellsSummary"
+
+    BasicCellsSummary:
+      title: Basic summary of cells
+      type: object
+      required:
+        - operationalState
+        - administrativeState
+      properties:
+        operationalState:
+          type: object
+          description: Number of enabled/disabled cells
+          required:
+            - enabled
+            - disabled
+          properties:
+            enabled:
+              $ref: "#/components/schemas/NumberOfCells"
+            disabled:
+              $ref: "#/components/schemas/NumberOfCells"
+        administrativeState:
+          type: object
+          description: Number of locked/unlocked/shutting down cells
+          required:
+            - locked
+            - unlocked
+            - shutting down
+          properties:
+            "locked":
+              $ref: "#/components/schemas/NumberOfCells"
+            "unlocked":
+              $ref: "#/components/schemas/NumberOfCells"
+            "shutting down":
+              $ref: "#/components/schemas/NumberOfCells"
+
+    NumberOfCells:
+      type: integer
+      format: int32
+      description: Number of cells with given state
+      example: 5000
+      minimum: 0
+
+    DistNames:
+      type: object
+      properties:
+        config:
+          description: Configuration managed object distName
+          type: string
+          example: "MRBTS-1/EQM-1/APEQM-1/RMOD-1"
+        runtime:
+          description: Runtime managed object distName
+          type: string
+          example: "MRBTS-1/EQM_R-1/APEQM_R-1/RMOD_R-1"
+
+    DusSummary:
+      title: Summary of DUs
+      type: object
+      required:
+        - administrativeState
+        - f1LinkStatus
+      properties:
+        administrativeState:
+          type: object
+          required:
+            - locked
+            - unlocked
+          properties:
+            locked:
+              type: integer
+              format: int32
+              description: Number of locked DUs
+              example: 66
+              minimum: 0
+            unlocked:
+              type: integer
+              format: int32
+              description: Number of unlocked DUs
+              example: 33
+              minimum: 0
+        f1LinkStatus:
+          type: object
+          required:
+            - available
+            - unavailable
+          properties:
+            available:
+              type: integer
+              format: int32
+              description: Number of available DUs
+              example: 55
+              minimum: 0
+            unavailable:
+              type: integer
+              format: int32
+              description: Number of unavailable DUs
+              example: 44
+              minimum: 0
+
+    BasicCell:
+      title: Basic cell
+      type: object
+      required:
+        - id
+        - name
+        - nrCellIdentity
+        - physicalLayerCellID
+        - technology
+        - cellGroupId
+        - administrativeState
+        - operationalState
+        - alarms
+        - distNames
+      properties:
+        id:
+          type: string
+          description: Instance ID of NRCELL object representing given cell
+            object model
+          example: "211"
+        name:
+          type: string
+          description: ClassName and instance ID of NRCELL object representing given cell
+          example: "NRCELL-211"
+        nrCellIdentity:
+          nullable: true
+          type: string
+          example: "123456"
+        physicalLayerCellID:
+          type: string
+          example: "12"
+        cellName:
+          type: string
+          example: "some cell name"
+        nrarfcn:
+          type: string
+          example: "3279165"
+        technology:
+          $ref: "#/components/schemas/CellTechnologyType"
+        nrarfcnDl:
+          type: string
+          example: "N/A"
+        nrarfcnUl:
+          type: string
+          example: "3279165"
+        cellGroupId:
+          type: string
+          description: Related cell group id
+          example: "123"
+        administrativeState:
+          $ref: "#/components/schemas/CellAdministrativeState"
+        operationalState:
+          $ref: "#/components/schemas/NullableOperationalState"
+        alarms:
+          nullable: true
+          type: array
+          description: Alarms reported for given cell
+          items:
+            $ref: "#/components/schemas/Alarm"
+        distNames:
+          $ref: "#/components/schemas/DistNames"
+
+    CellTechnologyType:
+      type: string
+      enum:
+        - TDD
+        - FDD
+
+    CellAdministrativeState:
+      type: string
+      enum:
+        - Locked
+        - Unlocked
+        - Shutting Down
+
+
+    CuCell:
+      title: CU cell
+      type: object
+      required:
+        - basicCell
+        - nrDuId
+        - duName
+        - type
+      properties:
+        basicCell:
+          $ref: "#/components/schemas/BasicCell"
+        nrDuId:
+          type: string
+          description: Serving Distributed Unit NRDU ID
+          example: "123"
+        duName:
+          type: string
+          description: Serving DU name
+          example: "NRDU-123"
+        type:
+          nullable: true
+          type: string
+          example: "2DL0UL"
+
+    CuCellsDiff:
+      title: CU Cells Diff
+      type: object
+      required:
+        - revision
+        - created
+        - updated
+        - removed
+      properties:
+        revision:
+          type: string
+          description: Identifier which represents a current version of CU cells
+        created:
+          type: array
+          description: Created cells
+          items:
+            $ref: "#/components/schemas/CuCell"
+        updated:
+          type: array
+          description: Updated cells
+          items:
+            $ref: "#/components/schemas/CuCell"
+        removed:
+          type: array
+          description: Removed cells IDs
+          items:
+            $ref: "#/components/schemas/CellId"
+
+    CellId:
+      type: string
+      description: Instance ID of NRCELL object representing given cell
+      example: "123"
+
+    Vm:
+      title: Virtual Machine of this gNB-CU
+      allOf:
+        - type: object
+          properties:
+            hostname:
+              type: string
+              description: Virtual machine hostname
+              example: "ueup01.cloud.nokia"
+            softwareVersion:
+              type: string
+              description: Virtual machine software version
+              example: "19B_126_a"
+        - $ref: "#/components/schemas/CloudInfrastructureElementState"
+
+    CloudInfrastructureElementState:
+      title: Cloud infrastructure element state of this gNB
+      type: object
+      required:
+        - id
+        - name
+        - ipInterfaces
+        - availabilityStatus
+        - operationalState
+        - alarms
+        - distNames
+      properties:
+        id:
+          type: string
+          description: Unique id of element in scope of gNB
+          example: "5"
+        name:
+          nullable: true
+          type: string
+          description: Element's name
+          example: "CNCP-01234"
+        ipInterfaces:
+          nullable: true
+          type: array
+          description: Element IP interfaces
+          items:
+            $ref: "#/components/schemas/IpInterface"
+        availabilityStatus:
+          $ref: "#/components/schemas/NullableAvailabilityStatus"
+        operationalState:
+          $ref: "#/components/schemas/NullableOperationalState"
+        alarms:
+          nullable: true
+          type: array
+          description: Alarms reported for the element
+          items:
+            $ref: "#/components/schemas/Alarm"
+        distNames:
+          $ref: "#/components/schemas/NullableDistNames"
+
+    IpInterface:
+      title: Cloud infrastructure Ip interface
+      type: object
+      required:
+        - interfaceName
+        - ipAddress
+      properties:
+        interfaceName:
+          type: string
+          description: Interface name
+        ipAddress:
+          type: string
+          description: IPv4/v6 address
+          example: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+
+    NullableAvailabilityStatus:
+      nullable: true
+      type: string
+      enum:
+        - in test
+        - failed
+        - power off
+        - off line
+        - off duty
+        - dependency
+        - degraded
+        - not installed
+        - log full
+        - on line
+
+    NullableDistNames:
+      nullable: true
+      type: object
+      properties:
+        config:
+          description: Configuration managed object distName
+          type: string
+          example: "MRBTS-1/EQM-1/APEQM-1/RMOD-1"
+        runtime:
+          description: Runtime managed object distName
+          type: string
+          example: "MRBTS-1/EQM_R-1/APEQM_R-1/RMOD_R-1"

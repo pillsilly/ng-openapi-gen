@@ -1,0 +1,9 @@
+{
+  "defaultTag": "cu-asm-client",
+  "module": "CuAsmClientModule",
+  "customizedResponseType": {
+    "/snapshot/operations/locals/{operationId}/files/{fileId}": {
+      "toUse": "arraybuffer"
+    }
+  }
+}
