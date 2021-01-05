@@ -1,7 +1,7 @@
 import { Content } from './content';
+import { tsComments } from './gen-utils';
 import { Operation } from './operation';
 import { Options } from './options';
-import { tsComments } from './gen-utils';
 
 /**
  * An operation has a variant per distinct possible body content
@@ -27,7 +27,7 @@ export class OperationVariant {
     this.responseMethodName = `${methodName}$Response`;
     if (successResponse) {
       this.resultType = successResponse.type;
-      this.responseType = this.inferResponseType(successResponse.mediaType);
+      this.responseType = this.inferResponseType(successResponse.mediaType, operation, options);
       this.accept = successResponse.mediaType;
     } else {
       this.resultType = 'void';
@@ -42,8 +42,15 @@ export class OperationVariant {
     this.bodyMethodTsComments = tsComments(this.bodyMethodDescription(), 1, operation.deprecated);
   }
 
-  private inferResponseType(mediaType: string): string {
+  private inferResponseType(mediaType: string, operation: Operation, { customizedResponseType = {} }: Pick<Options, 'customizedResponseType'>): string {
     mediaType = mediaType.toLowerCase();
+
+    const customizedResponseTypeByPath = customizedResponseType[operation.path];
+
+    if (customizedResponseTypeByPath) {
+      return customizedResponseTypeByPath.toUse;
+    }
+
     if (mediaType.endsWith('/json') || mediaType.endsWith('+json')) {
       return 'json';
     } else if (mediaType.startsWith('text/')) {
